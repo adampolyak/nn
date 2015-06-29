@@ -34,13 +34,15 @@ static void nn_(SpatialMaxPooling_updateOutput_frame)(real *input_p, real *outpu
         {
           for(x = 0; x < kW; x++)
           {
-            real val = *(ip + y*iwidth + x);
-            if (val > maxval)
-            {
-              maxval = val;
-              maxindex = tcntr;
+            if ((j*dW+x < iwidth) & (i*dH+x < iheight)) {
+              real val = *(ip + y*iwidth + x);
+              if (val > maxval)
+              {
+                maxval = val;
+                maxindex = tcntr;
+              }
+              tcntr++;
             }
-            tcntr++;
           }
         }
 
@@ -62,6 +64,7 @@ static int nn_(SpatialMaxPooling_updateOutput)(lua_State *L)
   int kH = luaT_getfieldcheckint(L, 1, "kH");
   int dW = luaT_getfieldcheckint(L, 1, "dW");
   int dH = luaT_getfieldcheckint(L, 1, "dH");
+  int ceilMode = luaT_getfieldcheckboolean(L, 1, "ceil_mode");
   THTensor *indices = luaT_getfieldcheckudata(L, 1, "indices", torch_Tensor);
   THTensor *output = luaT_getfieldcheckudata(L, 1, "output", torch_Tensor);
   int dimw = 2;
@@ -91,8 +94,16 @@ static int nn_(SpatialMaxPooling_updateOutput)(lua_State *L)
   nslices = input->size[dimh-1];
   iheight = input->size[dimh];
   iwidth = input->size[dimw];
-  oheight = (iheight - kH) / dH + 1;
-  owidth = (iwidth - kW) / dW + 1;
+  if (ceilMode)
+  {
+    oheight = ceil( ((float) (iheight - kH)) / (float)(dH) + 1);
+    owidth = ceil( ((float) (iwidth - kW)) / (float) (dW) + 1);
+  }
+  else
+  {
+    oheight = (iheight - kH) / dH + 1;
+    owidth = (iwidth - kW) / dW + 1;
+  }
 
   /* get contiguous input */
   input = THTensor_(newContiguous)(input);
