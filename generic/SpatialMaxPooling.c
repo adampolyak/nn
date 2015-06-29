@@ -64,7 +64,15 @@ static int nn_(SpatialMaxPooling_updateOutput)(lua_State *L)
   int kH = luaT_getfieldcheckint(L, 1, "kH");
   int dW = luaT_getfieldcheckint(L, 1, "dW");
   int dH = luaT_getfieldcheckint(L, 1, "dH");
-  int ceilMode = luaT_getfieldcheckboolean(L, 1, "ceil_mode");
+
+  int ceilMode = 0;
+  lua_getfield(L, 1, "ceil_mode");
+  if(!lua_isnil(L, -1))
+  {
+    ceilMode = lua_toboolean(L, -1);
+  }
+
+
   THTensor *indices = luaT_getfieldcheckudata(L, 1, "indices", torch_Tensor);
   THTensor *output = luaT_getfieldcheckudata(L, 1, "output", torch_Tensor);
   int dimw = 2;
